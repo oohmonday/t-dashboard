@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<!-- saved from url=(0054)file:///C:/Users/User/Downloads/trading-dashboard.html -->
+<html lang="th"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeWatch — Price Action Dashboard</title>
+<script src="./TradeWatch — Price Action Dashboard_files/chart.umd.min.js.download"></script>
+<link href="./TradeWatch — Price Action Dashboard_files/css2" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#040810;--panel:#080d1a;--card:#0b1020;--border:#162035;
+  --cyan:#00e5ff;--orange:#ff6b35;--green:#00e676;--red:#ff1744;
+  --yellow:#ffd740;--text:#dce8ff;--muted:#3d5278;--muted2:#5a7299;
+}
+body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0}
+#app{position:relative;z-index:1;max-width:1520px;margin:0 auto;padding:14px}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;
+  background:var(--panel);border:1px solid var(--border);border-radius:12px;
+  padding:16px 22px;margin-bottom:12px;position:relative;overflow:hidden}
+.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan) 40%,transparent)}
+.logo{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;letter-spacing:-.03em}
+.logo em{color:var(--cyan);font-style:normal}
+.tr{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.live{display:flex;align-items:center;gap:5px;font-size:.62rem;color:var(--green)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 7px var(--green);animation:blink 1.8s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+#upd{font-size:.62rem;color:var(--muted2)}
+
+/* NOTICE BANNER */
+.notice{background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.2);
+  border-radius:10px;padding:10px 16px;margin-bottom:12px;font-size:.65rem;
+  color:var(--muted2);line-height:1.6}
+.notice strong{color:var(--cyan)}
+
+/* DISCORD */
+.dc-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:var(--panel);border:1px solid var(--border);border-radius:12px;
+  padding:12px 18px;margin-bottom:12px}
+.dc-row label{font-size:.62rem;color:var(--muted2);white-space:nowrap}
+#whInput{flex:1;min-width:240px;background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:'Space Mono',monospace;font-size:.68rem;
+  padding:8px 12px;outline:none;transition:border-color .2s}
+#whInput:focus{border-color:var(--cyan)}
+#whInput::placeholder{color:var(--muted)}
+
+.btn{background:transparent;border:1px solid var(--border);color:var(--muted2);
+  font-family:'Space Mono',monospace;font-size:.62rem;padding:7px 14px;
+  border-radius:8px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn.cyan{border-color:var(--cyan);color:var(--cyan)}
+.btn.cyan:hover{background:var(--cyan);color:#000}
+.btn.gon{border-color:var(--green);color:var(--green);background:rgba(0,230,118,.08)}
+
+/* STATS */
+.sr{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+@media(max-width:560px){.sr{grid-template-columns:repeat(2,1fr)}}
+.st{background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:14px;text-align:center}
+.sl{font-size:.58rem;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
+.sv{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800}
+.c{color:var(--cyan)}.g{color:var(--green)}.r{color:var(--red)}.y{color:var(--yellow)}
+
+/* PAIRS */
+.pw{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.pl{font-size:.58rem;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase}
+.chip{background:var(--card);border:1px solid var(--border);border-radius:50px;
+  padding:5px 13px;font-size:.62rem;cursor:pointer;transition:all .2s;color:var(--muted2)}
+.chip.on{border-color:var(--cyan);color:var(--cyan);background:rgba(0,229,255,.07)}
+.chip.fx.on{border-color:var(--orange);color:var(--orange);background:rgba(255,107,53,.07)}
+
+.sec{display:flex;align-items:center;gap:8px;font-size:.6rem;color:var(--muted2);
+  letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+.sec::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* TICKERS */
+.tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:9px;margin-bottom:12px}
+.tk{background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:13px;transition:border-color .3s}
+.tk:hover{border-color:var(--cyan)}
+.tk.up{border-left:3px solid var(--green)}
+.tk.dn{border-left:3px solid var(--red)}
+.tk.fl{border-left:3px solid var(--muted)}
+.ts{font-size:.6rem;color:var(--muted2);margin-bottom:2px}
+.tp{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;margin-bottom:3px;line-height:1}
+.tc{font-size:.65rem}
+.tc.up{color:var(--green)}.tc.dn{color:var(--red)}.tc.fl{color:var(--muted2)}
+.tv{font-size:.58rem;color:var(--muted);margin-top:3px}
+.tk-load{font-size:.6rem;color:var(--muted);padding:4px 0}
+
+/* 2-COL */
+.tc2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:820px){.tc2{grid-template-columns:1fr}}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:7px}
+.ct{font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted2)}
+
+select{background:var(--bg);border:1px solid var(--border);color:var(--text);
+  font-family:'Space Mono',monospace;font-size:.62rem;padding:5px 10px;
+  border-radius:7px;outline:none;cursor:pointer}
+
+.tft{display:flex;gap:4px}
+.tfb{background:transparent;border:1px solid var(--border);color:var(--muted2);
+  font-family:'Space Mono',monospace;font-size:.58rem;padding:3px 9px;
+  border-radius:50px;cursor:pointer;transition:all .2s}
+.tfb.on{border-color:var(--orange);color:var(--orange);background:rgba(255,107,53,.1)}
+
+.cb{position:relative;height:220px}
+
+/* HEATMAP */
+.hm{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:7px}
+.hc{border-radius:8px;padding:11px 7px;text-align:center}
+.hs{font-size:.62rem;font-weight:700;margin-bottom:3px}
+.hv{font-size:.8rem;font-weight:700}
+
+/* SIGNALS */
+.sl2{display:flex;flex-direction:column;gap:7px;max-height:300px;overflow-y:auto}
+.sl2::-webkit-scrollbar{width:3px}
+.sl2::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.si{background:var(--panel);border:1px solid var(--border);border-radius:8px;
+  padding:11px 13px;display:flex;align-items:flex-start;gap:9px;
+  animation:fIn .3s ease}
+@keyframes fIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.si.bull{border-left:3px solid var(--green)}
+.si.bear{border-left:3px solid var(--red)}
+.sb{font-size:.58rem;padding:3px 6px;border-radius:4px;font-weight:700;white-space:nowrap;margin-top:1px}
+.sb.bull{background:rgba(0,230,118,.12);color:var(--green)}
+.sb.bear{background:rgba(255,23,68,.12);color:var(--red)}
+.sb.neu{background:rgba(93,114,153,.14);color:var(--muted2)}
+.sinfo{flex:1}
+.spr{font-size:.75rem;font-weight:700}
+.spa{font-size:.62rem;color:var(--muted2);margin-top:2px}
+.stm{font-size:.58rem;color:var(--muted)}
+.spc{font-size:.7rem;color:var(--cyan);font-weight:700;white-space:nowrap}
+
+/* LOG */
+.lw{overflow-x:auto}
+.lt{width:100%;border-collapse:collapse;font-size:.65rem}
+.lt th{text-align:left;color:var(--muted2);font-size:.58rem;letter-spacing:.08em;
+  padding:6px 10px;border-bottom:1px solid var(--border)}
+.lt td{padding:8px 10px;border-bottom:1px solid rgba(22,32,53,.5);vertical-align:middle}
+.lt tr:last-child td{border-bottom:none}
+.lt tbody tr:hover{background:rgba(0,229,255,.02)}
+.ok{font-size:.58rem;padding:2px 6px;border-radius:4px;background:rgba(0,230,118,.1);color:var(--green)}
+.no{font-size:.58rem;color:var(--muted)}
+
+.ld{display:flex;align-items:center;justify-content:center;gap:7px;
+  color:var(--muted2);font-size:.68rem;padding:26px}
+.sp{width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--cyan);
+  border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.em{text-align:center;color:var(--muted);font-size:.68rem;padding:24px}
+
+#toast{position:fixed;bottom:18px;right:18px;background:var(--panel);
+  border:1px solid var(--cyan);border-radius:10px;padding:11px 16px;
+  font-size:.7rem;color:var(--cyan);z-index:9999;display:none;max-width:300px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5)}
+
+footer{text-align:center;padding:18px;color:var(--muted);font-size:.58rem;margin-top:4px}
+.tag{display:inline-block;background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.15);
+  color:var(--cyan);font-size:.56rem;padding:2px 6px;border-radius:4px;margin:0 2px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <div>
+      <div class="logo">TRADE<em>WATCH</em></div>
+      <div style="font-size:.58rem;color:var(--muted2);margin-top:2px">Price Action Monitor + Discord Alerts</div>
+    </div>
+    <div class="tr">
+      <div class="live"><div class="dot"></div>LIVE</div>
+      <div id="upd">อัปเดต 15:20:26</div>
+      <button class="btn cyan" onclick="init()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <!-- HOW TO USE -->
+  <div class="notice">
+    <strong>📱 วิธีใช้งาน:</strong>
+    อัปโหลดไฟล์นี้ไปฝากที่ <strong>GitHub Pages</strong> หรือ <strong>Netlify Drop</strong> (ฟรี) แล้วเปิด URL นั้นแทนเพื่อให้ CORS ทำงาน
+    — หรือเปิดในคอมด้วย Chrome/Firefox ได้ทันที &nbsp;|&nbsp;
+    <strong>Discord Webhook:</strong> ไปที่ Server Settings → Integrations → Webhooks → New Webhook → Copy URL
+  </div>
+
+  <div class="dc-row">
+    <label>🔔 Discord Webhook:</label>
+    <input id="whInput" type="text" placeholder="https://discord.com/api/webhooks/ID/TOKEN">
+    <button class="btn gon" id="togBtn" onclick="toggleAlerts()">ปิด Alerts</button>
+    <button class="btn" onclick="testWebhook()">ทดสอบส่ง</button>
+    <span style="font-size:.58rem;color:var(--muted2)">H1 + H4 reversal patterns</span>
+  </div>
+
+  <div class="sr">
+    <div class="st"><div class="sl">Signals วันนี้</div><div class="sv c" id="sT">1</div></div>
+    <div class="st"><div class="sl">Bullish</div><div class="sv g" id="sB">1</div></div>
+    <div class="st"><div class="sl">Bearish</div><div class="sv r" id="sBr">0</div></div>
+    <div class="st"><div class="sl">Discord Sent</div><div class="sv y" id="sS">1</div></div>
+  </div>
+
+  <div class="pw">
+    <span class="pl">คู่เงิน:</span>
+    <div id="chips" style="display:flex;gap:7px;flex-wrap:wrap"><span class="chip  on">BTC/USDT</span><span class="chip  on">ETH/USDT</span><span class="chip  on">SOL/USDT</span><span class="chip  on">BNB/USDT</span><span class="chip  on">XRP/USDT</span><span class="chip fx on">USD/JPY</span><span class="chip fx on">EUR/USD</span><span class="chip fx on">GBP/USD</span></div>
+  </div>
+
+  <div class="sec">Live Prices</div>
+  <div class="tg" id="tg"><div class="tk dn"><div class="ts">BTC/USDT</div><div class="tp">70,931.00</div><div class="tc dn">▼ 1.28%</div><div class="tv">Vol: 52.10B</div></div><div class="tk dn"><div class="ts">ETH/USDT</div><div class="tp">2079.9100</div><div class="tc dn">▼ 0.87%</div><div class="tv">Vol: 20.65B</div></div><div class="tk dn"><div class="ts">SOL/USDT</div><div class="tp">88.4200</div><div class="tc dn">▼ 1.76%</div><div class="tv">Vol: 4.46B</div></div><div class="tk dn"><div class="ts">BNB/USDT</div><div class="tp">645.5600</div><div class="tc dn">▼ 0.75%</div><div class="tv">Vol: 1.02B</div></div><div class="tk dn"><div class="ts">XRP/USDT</div><div class="tp">1.4100</div><div class="tc dn">▼ 0.50%</div><div class="tv">Vol: 2.42B</div></div><div class="tk fl"><div class="ts">USD/JPY</div><div class="tp">157.5400</div><div class="tc fl">— 0.00%</div><div class="tv"></div></div><div class="tk fl"><div class="ts">EUR/USD</div><div class="tp">1.1618</div><div class="tc fl">— 0.00%</div><div class="tv"></div></div><div class="tk fl"><div class="ts">GBP/USD</div><div class="tp">1.3362</div><div class="tc fl">— 0.00%</div><div class="tv"></div></div></div>
+
+  <div class="sec">Volume &amp; Price Trend</div>
+  <div class="tc2">
+    <div class="card">
+      <div class="ch">
+        <div class="ct">Daily Volume (30 วัน)</div>
+        <select id="vSel" onchange="drawVol()"><option value="bitcoin">BTC/USDT</option><option value="ethereum">ETH/USDT</option><option value="solana">SOL/USDT</option><option value="binancecoin">BNB/USDT</option><option value="ripple">XRP/USDT</option></select>
+      </div>
+      <div class="cb"><canvas id="vChart" style="box-sizing: border-box; display: block; height: 220px; width: 636px;" width="796" height="275"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch">
+        <div class="ct">Price Trend</div>
+        <div style="display:flex;gap:7px;align-items:center">
+          <select id="trSel" onchange="drawTrend()"><option value="bitcoin">BTC/USDT</option><option value="ethereum">ETH/USDT</option><option value="solana">SOL/USDT</option><option value="binancecoin">BNB/USDT</option><option value="ripple">XRP/USDT</option></select>
+          <div class="tft" id="tfTabs">
+            <button class="tfb on" data-tf="1h" onclick="setTf(this)">H1</button>
+            <button class="tfb" data-tf="4h" onclick="setTf(this)">H4</button>
+            <button class="tfb" data-tf="1d" onclick="setTf(this)">D1</button>
+          </div>
+        </div>
+      </div>
+      <div class="cb"><canvas id="trChart" style="box-sizing: border-box; display: block; height: 220px; width: 636px;" width="796" height="275"></canvas></div>
+    </div>
+  </div>
+
+  <div class="tc2">
+    <div class="card">
+      <div class="ch"><div class="ct">24h Heatmap</div></div>
+      <div class="hm" id="hmap"><div class="hc" style="background:rgba(255,23,68,0.1754745)"><div class="hs">BTC/USDT</div><div class="hv" style="color:var(--red)">-1.28%</div></div><div class="hc" style="background:rgba(255,23,68,0.1380957)"><div class="hs">ETH/USDT</div><div class="hv" style="color:var(--red)">-0.87%</div></div><div class="hc" style="background:rgba(255,23,68,0.21859620000000002)"><div class="hs">SOL/USDT</div><div class="hv" style="color:var(--red)">-1.76%</div></div><div class="hc" style="background:rgba(255,23,68,0.12727860000000002)"><div class="hs">BNB/USDT</div><div class="hv" style="color:var(--red)">-0.75%</div></div><div class="hc" style="background:rgba(255,23,68,0.1053627)"><div class="hs">XRP/USDT</div><div class="hv" style="color:var(--red)">-0.50%</div></div><div class="hc" style="background:rgba(0,230,118,0.06)"><div class="hs">USD/JPY</div><div class="hv" style="color:var(--green)">+0.00%</div></div><div class="hc" style="background:rgba(0,230,118,0.06)"><div class="hs">EUR/USD</div><div class="hv" style="color:var(--green)">+0.00%</div></div><div class="hc" style="background:rgba(0,230,118,0.06)"><div class="hs">GBP/USD</div><div class="hv" style="color:var(--green)">+0.00%</div></div></div>
+    </div>
+    <div class="card">
+      <div class="ch">
+        <div class="ct">🎯 Price Action Signals</div>
+        <div class="tft" id="sfTabs">
+          <button class="tfb on" data-sf="H1" onclick="filterSig(this)">H1</button>
+          <button class="tfb" data-sf="H4" onclick="filterSig(this)">H4</button>
+          <button class="tfb" data-sf="ALL" onclick="filterSig(this)">ALL</button>
+        </div>
+      </div>
+      <div class="sl2" id="sigList"><div class="em">ยังไม่พบ pattern</div></div>
+    </div>
+  </div>
+
+  <div class="sec" style="margin-top:12px">Alert Log
+    <button style="background:none;border:none;color:var(--muted2);font-size:.58rem;cursor:pointer;
+      text-decoration:underline;font-family:&#39;Space Mono&#39;,monospace;margin-left:5px" onclick="clearLog()">ล้าง</button>
+  </div>
+  <div class="card" style="margin-bottom:18px">
+    <div class="lw">
+      <table class="lt">
+        <thead><tr>
+          <th>เวลา</th><th>คู่</th><th>TF</th><th>Pattern</th>
+          <th>ทิศทาง</th><th>ราคา</th><th>Discord</th>
+        </tr></thead>
+        <tbody id="logB"><tr><td style="color:var(--muted2)">15:16:28</td><td style="font-weight:700">BTC/USDT</td><td style="color:var(--orange)">H4</td><td>Hammer</td><td style="color:var(--green)">▲ Bullish</td><td style="color:var(--cyan)">71,102.00</td><td><span class="no">—</span></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    Data: <span class="tag">CoinGecko API</span> <span class="tag">Frankfurter.app</span>
+    — ฟรี 100% ไม่ต้อง API key · Auto-refresh 60 วิ<br><br>
+    Patterns: Engulfing · Hammer · Shooting Star · Doji · Morning Star · Evening Star · Tweezer
+  </footer>
+</div>
+<div id="toast" style="display: none;">📨 ส่ง Discord: BTC/USDT Test Signal ✅</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════════════════
+
+// CoinGecko IDs mapped to display info
+const CRYPTO = [
+  {id:'bitcoin',      sym:'BTCUSDT', lbl:'BTC/USDT'},
+  {id:'ethereum',     sym:'ETHUSDT', lbl:'ETH/USDT'},
+  {id:'solana',       sym:'SOLUSDT', lbl:'SOL/USDT'},
+  {id:'binancecoin',  sym:'BNBUSDT', lbl:'BNB/USDT'},
+  {id:'ripple',       sym:'XRPUSDT', lbl:'XRP/USDT'},
+];
+const FOREX = [
+  {sym:'USDJPY', lbl:'USD/JPY', from:'USD', to:'JPY'},
+  {sym:'EURUSD', lbl:'EUR/USD', from:'EUR', to:'USD'},
+  {sym:'GBPUSD', lbl:'GBP/USD', from:'GBP', to:'USD'},
+];
+const ALL_PAIRS = [
+  ...CRYPTO.map(p => ({...p, type:'crypto'})),
+  ...FOREX.map(p  => ({...p, type:'forex'})),
+];
+
+// CoinGecko OHLC interval map
+// days param → CoinGecko /ohlc endpoint
+const TF_DAYS = {'1h': 1, '4h': 7, '1d': 30};
+
+// ══════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════
+const S = {
+  prices: {}, signals: [], log: [],
+  alertsOn: false, webhook: '',
+  trendTf: '1h', sigFilter: 'H1',
+  sentCnt: 0,
+  active: new Set(ALL_PAIRS.map(p => p.sym)),
+  vChart: null, trChart: null,
+};
+
+// ══════════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════════
+async function init() {
+  try {
+    await loadPrices();
+    renderTickers();
+    renderHeatmap();
+    await drawVol();
+    await drawTrend();
+    await scan();
+    document.getElementById('upd').textContent =
+      'อัปเดต ' + new Date().toLocaleTimeString('th-TH');
+  } catch(e) {
+    toast('❌ Error: ' + e.message, 6000);
+    console.error(e);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  buildChips();
+  buildSelects();
+  init();
+  setInterval(init, 60000);
+});
+
+// ══════════════════════════════════════════════════════════
+//  UI BUILDERS
+// ══════════════════════════════════════════════════════════
+function buildChips() {
+  var area = document.getElementById('chips');
+  ALL_PAIRS.forEach(function(p) {
+    var c = document.createElement('span');
+    c.className = 'chip ' + (p.type === 'forex' ? 'fx' : '') + ' on';
+    c.textContent = p.lbl;
+    c.addEventListener('click', function() {
+      if (S.active.has(p.sym)) {
+        if (S.active.size <= 1) return;
+        S.active.delete(p.sym);
+        c.classList.remove('on');
+      } else {
+        S.active.add(p.sym);
+        c.classList.add('on');
+      }
+      renderTickers();
+      renderHeatmap();
+    });
+    area.appendChild(c);
+  });
+}
+
+function buildSelects() {
+  ['vSel','trSel'].forEach(function(id) {
+    var el = document.getElementById(id);
+    CRYPTO.forEach(function(p) {
+      var o = document.createElement('option');
+      o.value = p.id; o.textContent = p.lbl;
+      el.appendChild(o);
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+//  FETCH PRICES  — CoinGecko (no auth, CORS-friendly)
+// ══════════════════════════════════════════════════════════
+async function loadPrices() {
+  await Promise.allSettled([fetchCryptoPrices(), fetchForexPrices()]);
+}
+
+async function fetchCryptoPrices() {
+  var ids = CRYPTO.map(function(p){ return p.id; }).join(',');
+  var url = 'https://api.coingecko.com/api/v3/coins/markets'
+          + '?vs_currency=usd'
+          + '&ids=' + ids
+          + '&order=market_cap_desc'
+          + '&sparkline=false'
+          + '&price_change_percentage=24h';
+  var r = await fetch(url);
+  if (!r.ok) throw new Error('CoinGecko markets HTTP ' + r.status);
+  var arr = await r.json();
+  arr.forEach(function(d) {
+    var meta = CRYPTO.find(function(p){ return p.id === d.id; });
+    if (!meta) return;
+    S.prices[meta.sym] = {
+      price:  d.current_price || 0,
+      change: d.price_change_percentage_24h || 0,
+      vol:    d.total_volume || 0,
+      high:   d.high_24h || 0,
+      low:    d.low_24h  || 0,
+      type: 'crypto', ok: true,
+    };
+  });
+}
+
+async function fetchForexPrices() {
+  var pairs = [
+    {sym:'USDJPY', from:'USD', to:'JPY'},
+    {sym:'EURUSD', from:'EUR', to:'USD'},
+    {sym:'GBPUSD', from:'GBP', to:'USD'},
+  ];
+  for (var i = 0; i < pairs.length; i++) {
+    try {
+      var p = pairs[i];
+      var r = await fetch('https://api.frankfurter.app/latest?from=' + p.from + '&to=' + p.to);
+      if (!r.ok) continue;
+      var d = await r.json();
+      if (d.rates && d.rates[p.to]) {
+        S.prices[p.sym] = {price: d.rates[p.to], change: 0, vol: 0, type: 'forex', ok: true};
+      }
+    } catch(e) {
+      console.warn('Forex ' + pairs[i].sym + ': ' + e.message);
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  RENDER TICKERS
+// ══════════════════════════════════════════════════════════
+function renderTickers() {
+  var tg = document.getElementById('tg');
+  var active = ALL_PAIRS.filter(function(p){ return S.active.has(p.sym); });
+  if (!active.length) { tg.innerHTML = '<div class="em">ไม่มีคู่ที่เลือก</div>'; return; }
+  tg.innerHTML = active.map(function(p) {
+    var d = S.prices[p.sym];
+    if (!d) return '<div class="tk fl"><div class="ts">' + p.lbl + '</div>'
+      + '<div class="tk-load">รอข้อมูล...</div></div>';
+    var chg = d.change || 0;
+    var cls = chg > 0.01 ? 'up' : chg < -0.01 ? 'dn' : 'fl';
+    var arr = cls==='up' ? '▲' : cls==='dn' ? '▼' : '—';
+    var vol = d.vol > 0 ? 'Vol: ' + fmtVol(d.vol) : '';
+    return '<div class="tk ' + cls + '">'
+      + '<div class="ts">' + p.lbl + '</div>'
+      + '<div class="tp">' + fmtPrice(d.price) + '</div>'
+      + '<div class="tc ' + cls + '">' + arr + ' ' + Math.abs(chg).toFixed(2) + '%</div>'
+      + '<div class="tv">' + vol + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+//  HEATMAP
+// ══════════════════════════════════════════════════════════
+function renderHeatmap() {
+  var el = document.getElementById('hmap');
+  el.innerHTML = ALL_PAIRS.filter(function(p){ return S.active.has(p.sym); }).map(function(p) {
+    var d = S.prices[p.sym];
+    if (!d) return '<div class="hc" style="background:var(--panel)">'
+      + '<div class="hs">' + p.lbl + '</div>'
+      + '<div class="hv" style="color:var(--muted)">—</div></div>';
+    var pct = d.change || 0;
+    var a = Math.min(Math.abs(pct)/5, 1);
+    var bg = pct >= 0
+      ? 'rgba(0,230,118,' + (.06 + a*.45) + ')'
+      : 'rgba(255,23,68,' + (.06 + a*.45) + ')';
+    var col = pct >= 0 ? 'var(--green)' : 'var(--red)';
+    return '<div class="hc" style="background:' + bg + '">'
+      + '<div class="hs">' + p.lbl + '</div>'
+      + '<div class="hv" style="color:' + col + '">' + (pct>=0?'+':'') + pct.toFixed(2) + '%</div>'
+      + '</div>';
+  }).join('') || '<div class="em">—</div>';
+}
+
+// ══════════════════════════════════════════════════════════
+//  OHLC DATA — CoinGecko /ohlc (no auth, CORS OK)
+//  Returns candles: [{t,o,h,l,c}]
+// ══════════════════════════════════════════════════════════
+async function getOHLC(coinId, days) {
+  // CoinGecko OHLC: each item = [timestamp, open, high, low, close]
+  // days=1 → 30min candles, days=7 → 4h candles, days=30 → daily
+  var url = 'https://api.coingecko.com/api/v3/coins/' + coinId
+          + '/ohlc?vs_currency=usd&days=' + days;
+  try {
+    var r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    var raw = await r.json();
+    if (!Array.isArray(raw) || raw.length === 0) throw new Error('Empty data');
+    return raw.map(function(c) {
+      return {t: new Date(c[0]), o: c[1], h: c[2], l: c[3], c: c[4]};
+    });
+  } catch(e) {
+    console.warn('getOHLC ' + coinId + ' days=' + days + ': ' + e.message);
+    return null;
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  VOLUME DATA — CoinGecko /market_chart
+// ══════════════════════════════════════════════════════════
+async function getVolumeDaily(coinId) {
+  var url = 'https://api.coingecko.com/api/v3/coins/' + coinId
+          + '/market_chart?vs_currency=usd&days=30&interval=daily';
+  try {
+    var r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    var d = await r.json();
+    // d.prices = [[ts, price], ...], d.total_volumes = [[ts, vol], ...]
+    if (!d.total_volumes || !d.prices) throw new Error('No data');
+    return d.prices.map(function(p, i) {
+      return {
+        t: new Date(p[0]),
+        c: p[1],
+        o: i > 0 ? d.prices[i-1][1] : p[1],
+        v: d.total_volumes[i] ? d.total_volumes[i][1] : 0,
+      };
+    });
+  } catch(e) {
+    console.warn('getVolumeDaily ' + coinId + ': ' + e.message);
+    return null;
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  VOLUME CHART
+// ══════════════════════════════════════════════════════════
+async function drawVol() {
+  var coinId = document.getElementById('vSel').value || 'bitcoin';
+  var data = await getVolumeDaily(coinId);
+  if (!data || data.length === 0) return;
+
+  var labels = data.map(function(d) {
+    return d.t.toLocaleDateString('th-TH', {month:'short', day:'numeric'});
+  });
+  var vols = data.map(function(d) { return +(d.v / 1e6).toFixed(2); });
+  var cols = data.map(function(d) {
+    return d.c >= d.o ? 'rgba(0,230,118,.75)' : 'rgba(255,23,68,.75)';
+  });
+
+  var ctx = document.getElementById('vChart').getContext('2d');
+  if (S.vChart) { S.vChart.destroy(); S.vChart = null; }
+  S.vChart = new Chart(ctx, {
+    type: 'bar',
+    data: {labels: labels, datasets: [{
+      data: vols, backgroundColor: cols, borderRadius: 3, borderSkipped: false,
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {legend:{display:false}, tooltip:{
+        backgroundColor:'#080d1a', borderColor:'#162035', borderWidth:1,
+        callbacks: {label: function(c){ return ' ' + c.parsed.y.toFixed(1) + 'M USD'; }},
+      }},
+      scales: {
+        x: {ticks:{color:'#3d5278',font:{size:8},maxTicksLimit:10}, grid:{color:'rgba(22,32,53,.5)'}},
+        y: {ticks:{color:'#3d5278',font:{size:8}}, grid:{color:'rgba(22,32,53,.5)'}},
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+//  TREND CHART
+// ══════════════════════════════════════════════════════════
+async function drawTrend() {
+  var coinId = document.getElementById('trSel').value || 'ethereum';
+  var tf = S.trendTf;
+  var days = TF_DAYS[tf] || 1;
+  var data = await getOHLC(coinId, days);
+  if (!data || data.length === 0) return;
+
+  // For H1 filter to roughly hourly candles from 30min data
+  if (tf === '1h' && days === 1) {
+    // Take every other candle (CoinGecko gives 30min for days=1)
+    data = data.filter(function(_, i){ return i % 2 === 0; });
+  }
+
+  var labels = data.map(function(d) {
+    if (tf === '1d') return d.t.toLocaleDateString('th-TH', {month:'short', day:'numeric'});
+    return d.t.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
+  });
+
+  var ctx = document.getElementById('trChart').getContext('2d');
+  if (S.trChart) { S.trChart.destroy(); S.trChart = null; }
+
+  var grad = ctx.createLinearGradient(0, 0, 0, 220);
+  grad.addColorStop(0, 'rgba(0,229,255,.18)');
+  grad.addColorStop(1, 'rgba(0,229,255,0)');
+
+  S.trChart = new Chart(ctx, {
+    type: 'line',
+    data: {labels: labels, datasets: [
+      {
+        label:'Close', data: data.map(function(d){return d.c;}),
+        borderColor:'#00e5ff', backgroundColor: grad,
+        borderWidth:2, pointRadius:0, fill:true, tension:.3,
+      },
+      {
+        label:'High', data: data.map(function(d){return d.h;}),
+        borderColor:'rgba(0,230,118,.3)', borderWidth:1,
+        pointRadius:0, fill:false, borderDash:[4,3], tension:.3,
+      },
+      {
+        label:'Low', data: data.map(function(d){return d.l;}),
+        borderColor:'rgba(255,23,68,.3)', borderWidth:1,
+        pointRadius:0, fill:false, borderDash:[4,3], tension:.3,
+      },
+    ]},
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{intersect:false, mode:'index'},
+      plugins:{legend:{display:false}, tooltip:{
+        backgroundColor:'#080d1a', borderColor:'#162035', borderWidth:1,
+        titleColor:'#00e5ff', bodyColor:'#dce8ff',
+        callbacks:{label: function(c){ return ' ' + c.dataset.label + ': ' + fmtPrice(c.parsed.y); }},
+      }},
+      scales: {
+        x:{ticks:{color:'#3d5278',font:{size:8},maxTicksLimit:8}, grid:{color:'rgba(22,32,53,.5)'}},
+        y:{ticks:{color:'#3d5278',font:{size:8}}, grid:{color:'rgba(22,32,53,.5)'}},
+      }
+    }
+  });
+}
+
+function setTf(btn) {
+  S.trendTf = btn.dataset.tf;
+  document.querySelectorAll('#tfTabs .tfb').forEach(function(b){
+    b.classList.toggle('on', b === btn);
+  });
+  drawTrend();
+}
+
+// ══════════════════════════════════════════════════════════
+//  PATTERN DETECTION
+// ══════════════════════════════════════════════════════════
+function detect(candles) {
+  var found = [];
+  var n = candles.length;
+  if (n < 3) return found;
+
+  var c  = candles[n-1];
+  var p  = candles[n-2];
+  var p2 = candles[n-3];
+
+  var body  = function(x){ return Math.abs(x.c - x.o); };
+  var upper = function(x){ return x.h - Math.max(x.c, x.o); };
+  var lower = function(x){ return Math.min(x.c, x.o) - x.l; };
+  var range = function(x){ return x.h - x.l; };
+  var bull  = function(x){ return x.c > x.o; };
+  var bear  = function(x){ return x.c < x.o; };
+
+  // Bullish Engulfing
+  if (bear(p) && bull(c) && body(c) > body(p) && c.o <= p.c && c.c >= p.o)
+    found.push({pattern:'Bullish Engulfing', dir:'bull'});
+
+  // Bearish Engulfing
+  if (bull(p) && bear(c) && body(c) > body(p) && c.o >= p.c && c.c <= p.o)
+    found.push({pattern:'Bearish Engulfing', dir:'bear'});
+
+  // Hammer
+  if (body(c) > 0 && lower(c) >= body(c)*1.8 && upper(c) <= body(c)*.6)
+    found.push({pattern:'Hammer', dir:'bull'});
+
+  // Shooting Star
+  if (body(c) > 0 && upper(c) >= body(c)*1.8 && lower(c) <= body(c)*.6)
+    found.push({pattern:'Shooting Star', dir:'bear'});
+
+  // Doji
+  if (range(c) > 0 && body(c)/range(c) < 0.1)
+    found.push({pattern:'Doji', dir:'neu'});
+
+  // Morning Star
+  if (bear(p2) && body(p2) > 0 && body(p) < body(p2)*.4
+      && bull(c) && body(c) > 0 && c.c > (p2.o+p2.c)/2)
+    found.push({pattern:'Morning Star', dir:'bull'});
+
+  // Evening Star
+  if (bull(p2) && body(p2) > 0 && body(p) < body(p2)*.4
+      && bear(c) && body(c) > 0 && c.c < (p2.o+p2.c)/2)
+    found.push({pattern:'Evening Star', dir:'bear'});
+
+  // Tweezer Bottom
+  if (p.l > 0 && Math.abs(c.l-p.l)/p.l < 0.001 && bear(p) && bull(c))
+    found.push({pattern:'Tweezer Bottom', dir:'bull'});
+
+  // Tweezer Top
+  if (p.h > 0 && Math.abs(c.h-p.h)/p.h < 0.001 && bull(p) && bear(c))
+    found.push({pattern:'Tweezer Top', dir:'bear'});
+
+  return found;
+}
+
+// ══════════════════════════════════════════════════════════
+//  SCAN — H1 and H4 for crypto pairs
+// ══════════════════════════════════════════════════════════
+async function scan() {
+  var TFS = [
+    {lbl:'H1', days:1},
+    {lbl:'H4', days:7},
+  ];
+  var active = CRYPTO.filter(function(p){ return S.active.has(p.sym); });
+  var newCnt = 0;
+
+  for (var i = 0; i < active.length; i++) {
+    for (var j = 0; j < TFS.length; j++) {
+      var p  = active[i];
+      var tf = TFS[j];
+
+      var candles = await getOHLC(p.id, tf.days);
+      if (!candles || candles.length < 3) continue;
+
+      // Use last 10 candles
+      var slice = candles.slice(-10);
+      var pats  = detect(slice);
+      var last  = slice[slice.length-1];
+
+      for (var k = 0; k < pats.length; k++) {
+        var pt = pats[k];
+        // Dedup within 4h
+        var dup = S.signals.find(function(s){
+          return s.sym === p.sym && s.tf === tf.lbl && s.pattern === pt.pattern
+            && (Date.now() - s.ts) < 4*3600*1000;
+        });
+        if (dup) continue;
+
+        var sig = {
+          sym: p.sym, lbl: p.lbl, tf: tf.lbl,
+          pattern: pt.pattern, dir: pt.dir,
+          price: last.c, ts: Date.now(), sent: false,
+        };
+        S.signals.unshift(sig);
+        newCnt++;
+
+        if (pt.dir !== 'neu') {
+          addLog(sig);
+          if (S.alertsOn && S.webhook) sendDiscord(sig);
+        }
+      }
+    }
+  }
+
+  S.signals = S.signals.slice(0, 60);
+  renderSignals();
+  updateStats();
+  if (newCnt > 0) toast('🔍 พบ ' + newCnt + ' pattern ใหม่');
+}
+
+// ══════════════════════════════════════════════════════════
+//  RENDER SIGNALS
+// ══════════════════════════════════════════════════════════
+function renderSignals() {
+  var el = document.getElementById('sigList');
+  var sigs = S.sigFilter === 'ALL'
+    ? S.signals
+    : S.signals.filter(function(s){ return s.tf === S.sigFilter; });
+
+  if (!sigs.length) {
+    el.innerHTML = '<div class="em">ยังไม่พบ pattern</div>';
+    return;
+  }
+  el.innerHTML = sigs.map(function(s) {
+    var cls  = s.dir === 'bull' ? 'bull' : s.dir === 'bear' ? 'bear' : '';
+    var bLbl = s.dir === 'bull' ? '▲ BULL' : s.dir === 'bear' ? '▼ BEAR' : '◆ NEU';
+    var bCls = s.dir === 'bull' ? 'bull' : s.dir === 'bear' ? 'bear' : 'neu';
+    var t = new Date(s.ts).toLocaleTimeString('th-TH');
+    return '<div class="si ' + cls + '">'
+      + '<div class="sb ' + bCls + '">' + bLbl + '</div>'
+      + '<div class="sinfo">'
+      + '<div class="spr">' + s.lbl
+      + ' <span style="color:var(--orange);font-size:.58rem">[' + s.tf + ']</span></div>'
+      + '<div class="spa">' + s.pattern + '</div>'
+      + '<div class="stm">' + t + '</div>'
+      + '</div>'
+      + '<div class="spc">' + fmtPrice(s.price) + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function filterSig(btn) {
+  S.sigFilter = btn.dataset.sf;
+  document.querySelectorAll('#sfTabs .tfb').forEach(function(b){
+    b.classList.toggle('on', b === btn);
+  });
+  renderSignals();
+}
+
+function updateStats() {
+  var today = new Date(); today.setHours(0,0,0,0);
+  var ts = today.getTime();
+  var tod = S.signals.filter(function(s){ return s.ts >= ts && s.dir !== 'neu'; });
+  document.getElementById('sT').textContent  = tod.length;
+  document.getElementById('sB').textContent  = tod.filter(function(s){return s.dir==='bull';}).length;
+  document.getElementById('sBr').textContent = tod.filter(function(s){return s.dir==='bear';}).length;
+  document.getElementById('sS').textContent  = S.sentCnt;
+}
+
+// ══════════════════════════════════════════════════════════
+//  ALERT LOG
+// ══════════════════════════════════════════════════════════
+function addLog(sig) { S.log.unshift(sig); renderLog(); }
+function renderLog() {
+  var tb = document.getElementById('logB');
+  if (!S.log.length) {
+    tb.innerHTML = '<tr><td colspan="7" class="em">ยังไม่มี alerts</td></tr>';
+    return;
+  }
+  tb.innerHTML = S.log.slice(0,30).map(function(s) {
+    var dc = s.dir==='bull' ? 'var(--green)' : 'var(--red)';
+    var dl = s.dir==='bull' ? '▲ Bullish' : '▼ Bearish';
+    return '<tr>'
+      + '<td style="color:var(--muted2)">' + new Date(s.ts).toLocaleTimeString('th-TH') + '</td>'
+      + '<td style="font-weight:700">' + s.lbl + '</td>'
+      + '<td style="color:var(--orange)">' + s.tf + '</td>'
+      + '<td>' + s.pattern + '</td>'
+      + '<td style="color:' + dc + '">' + dl + '</td>'
+      + '<td style="color:var(--cyan)">' + fmtPrice(s.price) + '</td>'
+      + '<td>' + (s.sent ? '<span class="ok">✓ ส่งแล้ว</span>' : '<span class="no">—</span>') + '</td>'
+      + '</tr>';
+  }).join('');
+}
+function clearLog() { S.log = []; renderLog(); }
+
+// ══════════════════════════════════════════════════════════
+//  DISCORD  — direct webhook POST (works from HTTPS pages)
+// ══════════════════════════════════════════════════════════
+function toggleAlerts() {
+  var url = document.getElementById('whInput').value.trim();
+  var btn = document.getElementById('togBtn');
+  if (!S.alertsOn) {
+    if (!url) { toast('⚠️ ใส่ Discord Webhook URL ก่อน'); return; }
+    if (url.indexOf('discord.com/api/webhooks') === -1) {
+      toast('⚠️ URL ไม่ถูกต้อง'); return;
+    }
+    S.webhook = url; S.alertsOn = true;
+    btn.textContent = 'ปิด Alerts';
+    btn.classList.add('gon');
+    toast('✅ เปิด Discord Alerts แล้ว');
+  } else {
+    S.alertsOn = false;
+    btn.textContent = 'เปิด Alerts';
+    btn.classList.remove('gon');
+    toast('🔕 ปิด Discord Alerts แล้ว');
+  }
+}
+
+async function sendDiscord(sig) {
+  if (!S.webhook) return;
+  var emoji = sig.dir === 'bull' ? '🟢' : '🔴';
+  var dirTh = sig.dir === 'bull' ? '🟢 BULLISH (ขาขึ้น)' : '🔴 BEARISH (ขาลง)';
+  var payload = {
+    username: 'TradeWatch 📊',
+    embeds: [{
+      title: emoji + ' ' + sig.pattern + ' — ' + sig.lbl,
+      description:
+        '**Timeframe:** `' + sig.tf + '`\n' +
+        '**ทิศทาง:** ' + dirTh + '\n' +
+        '**ราคา:** `' + fmtPrice(sig.price) + '`\n' +
+        '**เวลา:** ' + new Date(sig.ts).toLocaleString('th-TH'),
+      color: sig.dir === 'bull' ? 0x00e676 : 0xff1744,
+      footer: {text: 'TradeWatch • Price Action Monitor'},
+      timestamp: new Date(sig.ts).toISOString(),
+    }]
+  };
+  try {
+    var r = await fetch(S.webhook, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload),
+    });
+    if (r.ok || r.status === 204) {
+      sig.sent = true; S.sentCnt++;
+      updateStats(); renderLog();
+      toast('📨 ส่ง Discord: ' + sig.lbl + ' ' + sig.pattern);
+    } else {
+      var txt = await r.text().catch(function(){return '';});
+      toast('❌ Discord ' + r.status + ': ' + txt.slice(0,60));
+    }
+  } catch(e) {
+    // If CORS error on file:// → show friendly message
+    if (e.message.indexOf('Failed to fetch') !== -1 || e.message.indexOf('Load failed') !== -1) {
+      toast('⚠️ Discord: ต้องเปิดผ่าน HTTPS (GitHub Pages/Netlify) ไม่ใช่ file://');
+    } else {
+      toast('❌ Discord: ' + e.message);
+    }
+  }
+}
+
+async function testWebhook() {
+  var url = document.getElementById('whInput').value.trim();
+  if (!url) { toast('⚠️ ใส่ Webhook URL ก่อน'); return; }
+  if (url.indexOf('discord.com/api/webhooks') === -1) { toast('⚠️ URL ไม่ถูกต้อง'); return; }
+  S.webhook = url;
+  var testSig = {
+    pattern: 'Test Signal ✅', lbl: 'BTC/USDT', tf: 'H1',
+    dir: 'bull',
+    price: (S.prices['BTCUSDT'] && S.prices['BTCUSDT'].price) || 0,
+    ts: Date.now(), sent: false,
+  };
+  toast('📤 กำลังส่งทดสอบ...');
+  await sendDiscord(testSig);
+}
+
+// ══════════════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════════════
+function fmtPrice(p) {
+  if (!p || isNaN(p)) return '—';
+  if (p >= 10000) return p.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  if (p >= 1)     return p.toFixed(4);
+  return p.toFixed(6);
+}
+function fmtVol(v) {
+  if (v >= 1e9) return (v/1e9).toFixed(2)+'B';
+  if (v >= 1e6) return (v/1e6).toFixed(2)+'M';
+  if (v >= 1e3) return (v/1e3).toFixed(1)+'K';
+  return v.toFixed(0);
+}
+function toast(msg, dur) {
+  dur = dur || 4000;
+  var el = document.getElementById('toast');
+  el.textContent = msg; el.style.display = 'block';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(function(){ el.style.display = 'none'; }, dur);
+}
+</script>
+
+
+</body></html>
